@@ -19,3 +19,14 @@ requirement, documented in README and package.json `engines`.
 repo. It is executed only by the Prisma CLI (which loads TS config natively), never
 by the app. Chose the `.ts` name because it is what Prisma generates and documents;
 a `.js` variant is less-trodden ground.
+
+**2026-07-16 · Phase 2** — `node --test test/` fails on Windows (treats the
+directory as a module path). Resolution: test script uses an explicit glob
+(`node --test "test/*.test.js"`), which also stops the runner picking up
+`test/helpers.js` as a zero-assertion "passing test".
+
+**2026-07-16 · Phase 2** — Plan puts board routes in Phase 3, but SPEC §8.3
+(cross-profile isolation) is required as an automated test in Phase 2. Resolved
+by building the two read-only board routes (list, get-by-id) in Phase 2 so the
+invariant test runs against a real bucket-scoped route now; Phase 3 adds the
+writes through the same scoping.

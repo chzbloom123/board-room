@@ -5,6 +5,8 @@ import fastifyCookie from '@fastify/cookie'
 import fastifyStatic from '@fastify/static'
 import { config } from './config.js'
 import { prisma } from './db.js'
+import { authRoutes } from './auth.js'
+import { boardRoutes } from './boards.js'
 
 const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
@@ -19,15 +21,18 @@ const logRedactions = {
   censor: '[redacted]',
 }
 
-export function buildApp({ logger = true } = {}) {
+export function buildApp({ logger = true, loggerStream } = {}) {
   const app = Fastify({
-    logger: logger ? { redact: logRedactions } : false,
+    logger: logger ? { redact: logRedactions, stream: loggerStream } : false,
     trustProxy: true, // Railway terminates TLS in front of the app
   })
 
   app.register(fastifyCookie, { secret: config.sessionSecret })
 
   app.register(fastifyStatic, { root: publicDir })
+
+  app.register(authRoutes)
+  app.register(boardRoutes)
 
   app.get('/healthz', async (request, reply) => {
     try {

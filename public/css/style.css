@@ -1,0 +1,130 @@
+/* Board Room — navy/gold game-show aesthetic (reference prototype) */
+:root {
+  --navy-deep: #0a1128;
+  --navy: #14213d;
+  --navy-panel: #1c2b4a;
+  --gold: #fca311;
+  --gold-bright: #ffc145;
+  --ink: #e5e5e5;
+  --ink-dim: #9aa3b2;
+  --red: #ef4444;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-deep) 70%);
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+.view[hidden] { display: none; }
+
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0;
+}
+
+.brand-small { font-size: 1rem; }
+
+/* Login */
+#view-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.login-card {
+  background: var(--navy-panel);
+  border: 1px solid rgba(252, 163, 17, 0.25);
+  border-radius: 12px;
+  padding: 2.5rem;
+  width: min(24rem, 90vw);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.tagline { color: var(--ink-dim); margin: 0.25rem 0 1.5rem; }
+
+form label {
+  display: block;
+  text-align: left;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--navy-deep);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+
+.btn {
+  font: inherit;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+}
+
+.btn-gold {
+  background: var(--gold);
+  color: var(--navy-deep);
+  font-weight: 700;
+  width: 100%;
+}
+
+.btn-gold:hover { background: var(--gold-bright); }
+
+.btn-quiet {
+  background: transparent;
+  color: var(--ink-dim);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-quiet:hover { color: var(--ink); border-color: rgba(255, 255, 255, 0.4); }
+
+.form-error { color: var(--red); font-size: 0.85rem; }
+
+/* Library */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(252, 163, 17, 0.2);
+}
+
+.spacer { flex: 1; }
+
+.profile-chip { color: var(--gold); font-weight: 600; }
+
+.library { max-width: 60rem; margin: 2rem auto; padding: 0 1.5rem; }
+
+.board-list { list-style: none; margin: 0; padding: 0; }
+
+.board-row {
+  background: var(--navy-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.empty-note { color: var(--ink-dim); }

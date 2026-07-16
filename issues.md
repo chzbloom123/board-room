@@ -30,3 +30,22 @@ directory as a module path). Resolution: test script uses an explicit glob
 by building the two read-only board routes (list, get-by-id) in Phase 2 so the
 invariant test runs against a real bucket-scoped route now; Phase 3 adds the
 writes through the same scoping.
+
+**2026-07-16 · Phase 3** — Spec lists "fewer than 4 columns" as an error but is
+silent on more than 4. Decision: more than 4 is also an error (the likely cause
+is an unquoted comma; the message says to quote the field). Logged as a decision
+made without an explicit ruling.
+
+**2026-07-16 · Phase 3** — The `hidden` attribute lost to author CSS twice
+(`#view-login { display:flex }` and `input { display:block }` both outrank the
+UA's `[hidden]` rule). Fixed with a global `[hidden] { display:none !important }`.
+Found by browser smoke test, not by API tests — worth keeping the habit of
+driving the real UI each phase.
+
+**2026-07-16 · Phase 3** — Tests and dev share one Postgres; the suite's resetDb
+wipes demo login profiles. Mitigation: `npm run seed` recreates the two demo
+profiles (Steam Ops / Night Shift). Acceptable for v1; a separate test database
+would be the clean fix if it ever bites harder.
+
+**2026-07-16 · Phase 3** — Test files run concurrently by default in node:test
+and stomped each other's DB state. Test script pins --test-concurrency=1.

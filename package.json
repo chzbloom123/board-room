@@ -4,10 +4,11 @@
   "description": "Instructor-run Jeopardy-style training game",
   "main": "src/index.js",
   "scripts": {
-    "test": "node --test \"test/*.test.js\"",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "migrate": "prisma migrate deploy"
+    "migrate": "prisma migrate deploy",
+    "seed": "node scripts/seed-demo.js"
   },
   "keywords": [],
   "author": "",

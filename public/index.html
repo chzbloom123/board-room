@@ -37,14 +37,48 @@
       <main class="library">
         <div class="library-head">
           <h2>Boards</h2>
+          <span class="spacer"></span>
+          <button id="import-btn" class="btn btn-quiet">Import JSON</button>
+          <input id="import-file" type="file" accept=".json,application/json" hidden>
+          <button id="new-board-btn" class="btn btn-gold btn-inline">New board</button>
         </div>
         <ul id="board-list" class="board-list"></ul>
         <p id="library-empty" class="empty-note" hidden>
-          No boards yet. Board creation arrives in the next phase.
+          No boards yet — create one from CSV or import a JSON export.
         </p>
       </main>
     </section>
+
+    <!-- Editor view (create + edit) -->
+    <section id="view-editor" class="view" hidden>
+      <header class="topbar">
+        <span class="brand brand-small">Board Room</span>
+        <span class="spacer"></span>
+        <button id="editor-back-btn" class="btn btn-quiet">Back to library</button>
+      </header>
+      <main class="editor">
+        <h2 id="editor-title">New board</h2>
+        <label class="editor-name">Board name
+          <input id="editor-name" placeholder="e.g. Q3 Safety Review" required>
+        </label>
+        <div class="editor-csv-head">
+          <label for="editor-csv">Questions (CSV: topic, points, question, answer — one row per question)</label>
+          <span class="spacer"></span>
+          <button id="csv-upload-btn" class="btn btn-quiet btn-small">Upload CSV file</button>
+          <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
+        </div>
+        <textarea id="editor-csv" rows="12" spellcheck="false"
+          placeholder="Safety Basics,100,What does PPE stand for?,Personal Protective Equipment"></textarea>
+        <div id="editor-problems"></div>
+        <div id="editor-preview"></div>
+        <div class="editor-actions">
+          <button id="editor-save-btn" class="btn btn-gold btn-inline" disabled>Save board</button>
+          <span id="editor-status" class="editor-status"></span>
+        </div>
+      </main>
+    </section>
   </div>
+  <div id="toast" class="toast" hidden></div>
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>

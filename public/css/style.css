@@ -20,7 +20,9 @@ body {
   color: var(--ink);
 }
 
-.view[hidden] { display: none; }
+/* !important so author display rules (e.g. #view-login's flex, input's
+   block) never beat the hidden attribute on specificity. */
+[hidden] { display: none !important; }
 
 .brand {
   font-weight: 800;
@@ -128,3 +130,109 @@ input:focus { outline: 2px solid var(--gold); border-color: transparent; }
 }
 
 .empty-note { color: var(--ink-dim); }
+
+/* Library rows */
+.library-head { display: flex; align-items: center; gap: 0.75rem; }
+
+.board-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.board-row-info { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 12rem; }
+.board-row-name { font-weight: 700; font-size: 1.05rem; }
+.board-row-meta { color: var(--ink-dim); font-size: 0.85rem; }
+.board-row-actions { display: flex; gap: 0.5rem; }
+
+.session-chip {
+  align-self: flex-start;
+  background: rgba(252, 163, 17, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(252, 163, 17, 0.4);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.6rem;
+}
+
+.btn-inline { width: auto; }
+.btn-small { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.12); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Editor */
+.editor { max-width: 70rem; margin: 2rem auto; padding: 0 1.5rem; }
+.editor-name { display: block; max-width: 28rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: var(--ink-dim); }
+.editor-csv-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--ink-dim); }
+
+#editor-csv {
+  width: 100%;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.9rem;
+  background: var(--navy-deep);
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.75rem;
+  resize: vertical;
+}
+#editor-csv:focus { outline: 2px solid var(--gold); border-color: transparent; }
+
+#editor-problems { margin: 0.75rem 0; }
+.problem { margin: 0.25rem 0; font-size: 0.9rem; }
+.problem-error { color: var(--red); }
+.problem-warning { color: var(--gold-bright); }
+
+.preview-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  background: var(--navy-panel);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.preview-table th {
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--gold);
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  padding: 0.6rem 0.5rem;
+}
+.preview-table td {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.5rem;
+  vertical-align: top;
+  font-size: 0.82rem;
+}
+.preview-points { display: block; color: var(--gold); font-weight: 700; }
+.preview-q { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.preview-blank { color: rgba(255, 255, 255, 0.15); text-align: center; }
+
+.editor-actions { display: flex; align-items: center; gap: 1rem; margin: 1rem 0 3rem; }
+.editor-status { color: var(--ink-dim); font-size: 0.85rem; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy-panel);
+  border: 1px solid rgba(252, 163, 17, 0.4);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 0.7rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+.toast-error { border-color: rgba(239, 68, 68, 0.6); color: #fecaca; }

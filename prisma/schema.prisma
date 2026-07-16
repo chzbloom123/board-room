@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model InstructorProfile {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  boards       Board[]
+  sessions     GameSession[]
+}
+
+model Board {
+  id             String            @id @default(cuid())
+  ownerProfileId String
+  name           String
+  topics         Json // [{ name, cells: [{ points, question, answer }] }]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  owner          InstructorProfile @relation(fields: [ownerProfileId], references: [id])
+}
+
+model GameSession {
+  id             String            @id @default(cuid())
+  ownerProfileId String
+  boardId        String
+  state          Json // { players: [{ name, color, score }], usedCells: [[ti,ci]], log: [...] }
+  status         String // "active" | "finished"
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  owner          InstructorProfile @relation(fields: [ownerProfileId], references: [id])
+}

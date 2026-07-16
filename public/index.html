@@ -77,6 +77,57 @@
         </div>
       </main>
     </section>
+    <!-- Player setup view -->
+    <section id="view-setup" class="view" hidden>
+      <header class="topbar">
+        <span class="brand brand-small">Board Room</span>
+        <span class="spacer"></span>
+        <button id="setup-back-btn" class="btn btn-quiet">Back to library</button>
+      </header>
+      <main class="setup">
+        <h2 id="setup-title">New game</h2>
+        <p class="setup-hint">Add the players or teams answering today.</p>
+        <ul id="player-list" class="player-list"></ul>
+        <div class="setup-actions">
+          <button id="add-player-btn" class="btn btn-quiet">Add player</button>
+          <button id="start-game-btn" class="btn btn-gold btn-inline">Start game</button>
+        </div>
+        <p id="setup-error" class="form-error" role="alert" hidden></p>
+      </main>
+    </section>
+
+    <!-- Live game view -->
+    <section id="view-game" class="view" hidden>
+      <header class="topbar game-topbar">
+        <span class="brand brand-small">Board Room</span>
+        <span id="game-board-name" class="game-board-name"></span>
+        <span class="spacer"></span>
+        <button id="undo-btn" class="btn btn-quiet" disabled>Undo</button>
+        <button id="end-game-btn" class="btn btn-danger">End game</button>
+        <button id="game-back-btn" class="btn btn-quiet" title="The game stays active — resume it from the library">Library</button>
+      </header>
+      <main class="game">
+        <div id="game-board" class="game-board"></div>
+      </main>
+      <footer id="scoreboard" class="scoreboard"></footer>
+
+      <!-- Question modal -->
+      <div id="question-modal" class="modal" hidden>
+        <div class="modal-card">
+          <div id="modal-head" class="modal-head"></div>
+          <div id="modal-question" class="modal-question"></div>
+          <div id="modal-answer" class="modal-answer" hidden></div>
+          <div class="modal-controls">
+            <button id="reveal-btn" class="btn btn-gold btn-inline">Reveal answer</button>
+          </div>
+          <div id="judging" class="judging" hidden></div>
+          <div class="modal-footer">
+            <button id="noone-btn" class="btn btn-quiet" hidden>No one got it — close question</button>
+            <button id="modal-cancel-btn" class="btn btn-quiet">Back to board</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
   <div id="toast" class="toast" hidden></div>
   <script type="module" src="/js/app.js"></script>

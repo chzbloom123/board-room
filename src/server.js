@@ -7,6 +7,7 @@ import { config } from './config.js'
 import { prisma } from './db.js'
 import { authRoutes } from './auth.js'
 import { boardRoutes } from './boards.js'
+import { sessionRoutes } from './sessions.js'
 
 const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
@@ -33,6 +34,7 @@ export function buildApp({ logger = true, loggerStream } = {}) {
 
   app.register(authRoutes)
   app.register(boardRoutes)
+  app.register(sessionRoutes)
 
   app.get('/healthz', async (request, reply) => {
     try {

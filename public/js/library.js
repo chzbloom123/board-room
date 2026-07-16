@@ -1,6 +1,7 @@
 import { api } from './api.js'
 import { $, el, showView, toast } from './ui.js'
 import { openEditor } from './editor.js'
+import { openSetup, enterGame } from './game.js'
 
 export async function enterLibrary(profile) {
   $('profile-name').textContent = profile.name
@@ -34,8 +35,8 @@ function boardRow(board) {
       { class: 'board-row-actions' },
       el('button', {
         class: 'btn btn-gold btn-inline',
-        disabled: true, // Play arrives with Phase 4
-        title: 'Live game arrives in the next phase',
+        onclick: () =>
+          board.activeSessionId ? enterGame(board.activeSessionId) : openSetup(board),
       }, board.activeSessionId ? 'Resume' : 'Play'),
       el('button', { class: 'btn btn-quiet', onclick: () => editBoard(board.id) }, 'Edit'),
       el('button', { class: 'btn btn-quiet', onclick: () => exportBoard(board.id) }, 'Export'),

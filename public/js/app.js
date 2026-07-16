@@ -2,9 +2,11 @@ import { api } from './api.js'
 import { $, showView } from './ui.js'
 import { enterLibrary, wireLibrary } from './library.js'
 import { wireEditor } from './editor.js'
+import { wireGame } from './game.js'
 
 wireLibrary()
 wireEditor()
+wireGame()
 
 $('login-form').addEventListener('submit', async (e) => {
   e.preventDefault()

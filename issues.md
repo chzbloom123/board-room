@@ -49,3 +49,19 @@ would be the clean fix if it ever bites harder.
 
 **2026-07-16 · Phase 3** — Test files run concurrently by default in node:test
 and stomped each other's DB state. Test script pins --test-concurrency=1.
+
+**2026-07-16 · Phase 4** — Judging semantics decided without an explicit ruling:
+a "correct" judgment both scores and closes the cell in ONE log entry
+(closesCell:true), so undoing it reverts score and reopens the cell atomically —
+matching PLAN's "close cell via correct answer → undo (cell reopens, score
+reverts)". Wrong answers leave the cell open for other players; "No one got it"
+closes with no score; "Back to board" dismisses without closing (misclick path).
+
+**2026-07-16 · Phase 4** — Multiple simultaneous active sessions per board are
+allowed (no server constraint); the library's Resume points at the most recent.
+Blocking would contradict SPEC §3's concurrent-instructor requirement in the
+same-board edge case.
+
+**2026-07-16 · Phase 4** — Chrome autofill fills the profile-name field with an
+email on the login form. Harmless (login just fails), but autocomplete
+attributes may deserve a look in Phase 5 polish.

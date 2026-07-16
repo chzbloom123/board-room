@@ -1,7 +1,7 @@
 // Small shared UI helpers: view switching, toast, element shorthand.
 export const $ = (id) => document.getElementById(id)
 
-const viewIds = ['view-login', 'view-library', 'view-editor']
+const viewIds = ['view-login', 'view-library', 'view-editor', 'view-setup', 'view-game']
 
 export function showView(id) {
   for (const viewId of viewIds) {

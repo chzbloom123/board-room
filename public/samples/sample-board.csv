@@ -1,0 +1,32 @@
+topic,points,question,answer
+Safety Basics,100,What does PPE stand for?,Personal Protective Equipment
+Safety Basics,200,What is the first step in LOTO?,Notify affected employees
+Safety Basics,300,Minimum distance from an open trench edge?,Two feet
+Safety Basics,400,Who can remove a lockout tag?,The person who applied it
+Safety Basics,500,Name the three points of contact rule context,Ladder climbing
+Steam Systems,100,What does PRV stand for?,Pressure Relief Valve
+Steam Systems,200,Normal header pressure in psig?,125
+Steam Systems,300,What causes water hammer?,Condensate slugs in steam lines
+Steam Systems,400,First action on a failed steam trap?,Isolate and tag it
+Steam Systems,500,Why crack a drain before opening a main valve?,To warm and drain the line
+Electrical,100,What color is a ground wire in the US?,Green or bare
+Electrical,200,Minimum approach distance for 480V?,42 inches
+Electrical,300,What does GFCI protect against?,Ground faults / electric shock
+Electrical,400,Arc flash PPE category for a 480V MCC?,Category 2
+Electrical,500,Who may reset a tripped breaker?,Qualified electrical worker
+First Aid,100,Compression rate for adult CPR?,100 to 120 per minute
+First Aid,200,First response to a chemical splash in the eye?,Flush for 15 minutes
+First Aid,300,Signs of heat stroke?,Hot dry skin and confusion
+First Aid,400,When do you use a tourniquet?,Severe limb bleeding uncontrolled by pressure
+First Aid,500,Recovery position is used when?,Unconscious but breathing
+Procedures,100,Where are SDS sheets kept?,The safety station binder
+Procedures,200,Who signs a confined space permit?,The entry supervisor
+Procedures,300,How long is a hot work permit valid?,One shift
+Procedures,400,What triggers a stop work authority?,Any unsafe condition
+Procedures,500,When must an incident be reported?,Before end of shift
+Plant Trivia,100,Year the plant opened?,1987
+Plant Trivia,200,How many boilers on site?,4
+Plant Trivia,300,Name of the oldest turbine,Old Bessie
+Plant Trivia,400,Plant record for days without incident?,842
+Plant Trivia,500,Who founded the safety committee?,Maria Delgado
+Safety Culture,final,"Any employee may halt a job under this authority, no permission needed",Stop work authority

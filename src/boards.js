@@ -1,7 +1,8 @@
 import { prisma } from './db.js'
+import { Prisma } from './generated/prisma/client.ts'
 import { requireProfile } from './auth.js'
 // The single shared parser/validator — the same file the browser loads.
-import { boardFromCsv, validateTopics } from '../public/js/csv.js'
+import { boardFromCsv, validateTopics, validateFinal } from '../public/js/csv.js'
 
 // All routes here are bucket-scoped: the owning profile comes from the
 // session (request.profile), and every query filters on ownerProfileId.
@@ -47,6 +48,7 @@ export async function boardRoutes(app) {
         ownerProfileId: request.profile.id,
         name: name.trim(),
         topics: parsed.topics,
+        final: jsonOrNull(parsed.final),
       },
     })
     return { board, warnings: parsed.warnings }
@@ -64,7 +66,7 @@ export async function boardRoutes(app) {
     }
     const board = await prisma.board.update({
       where: { id: existing.id },
-      data: { name: name.trim(), topics: parsed.topics },
+      data: { name: name.trim(), topics: parsed.topics, final: jsonOrNull(parsed.final) },
     })
     return { board, warnings: parsed.warnings }
   })
@@ -86,20 +88,27 @@ export async function boardRoutes(app) {
       version: 1,
       name: board.name,
       topics: board.topics,
+      final: board.final ?? null,
     }
   })
 
   app.post('/api/boards/import', async (request, reply) => {
-    const { name, topics } = request.body ?? {}
+    const { name, topics, final = null } = request.body ?? {}
     if (typeof name !== 'string' || name.trim() === '') {
       return reply.code(400).send({ errors: [{ message: 'Board name required' }] })
     }
     const { errors, warnings } = validateTopics(topics)
+    errors.push(...validateFinal(final).errors)
     if (errors.length > 0) {
       return reply.code(400).send({ errors, warnings })
     }
     const board = await prisma.board.create({
-      data: { ownerProfileId: request.profile.id, name: name.trim(), topics },
+      data: {
+        ownerProfileId: request.profile.id,
+        name: name.trim(),
+        topics,
+        final: jsonOrNull(final ? { category: final.category, question: final.question, answer: final.answer } : null),
+      },
     })
     return { board, warnings }
   })
@@ -123,6 +132,7 @@ function parseAndValidate(name, csv) {
   const parsed = boardFromCsv(csv)
   return {
     topics: parsed.topics,
+    final: parsed.final ?? null,
     errors: [...errors, ...parsed.errors],
     warnings: parsed.warnings,
   }
@@ -135,6 +145,13 @@ function boardSummary(board) {
     name: board.name,
     topicCount: topics.length,
     questionCount: topics.reduce((n, t) => n + (t.cells?.length ?? 0), 0),
+    topicNames: topics.map((t) => t.name),
+    hasFinal: Boolean(board.final),
     updatedAt: board.updatedAt,
   }
+}
+
+// Prisma needs an explicit sentinel to write SQL NULL into a Json column.
+function jsonOrNull(value) {
+  return value === null || value === undefined ? Prisma.DbNull : value
 }

@@ -8,11 +8,17 @@ import { requireProfile } from './auth.js'
 // reading the row back.
 //
 // Log entry: { playerIdx|null, points|null, correct|null, topicIdx, cellIdx,
-//              closesCell, ts }
+//              closesCell, final?, ts }
 //   playerIdx present → score change of (correct ? +points : -points)
 //   closesCell true   → the cell became used
+//   final true        → a final-round judgment; points is that player's wager
 // A "correct" judgment closes the cell in the same entry, so undoing it
 // reopens the cell AND reverts the score atomically (PLAN Phase 4 exit 1).
+//
+// Final round (owner override of SPEC §7, see issues.md): state.final is
+// { wagers: [n per player], judged: [playerIdx...] }. It exists once wagers
+// are locked. Each judgment is an ordinary log entry with final:true, so
+// undo and resume need no special machinery beyond reverting `judged`.
 
 const PLAYER_COLORS = ['#fca311', '#4ade80', '#60a5fa', '#f472b6', '#a78bfa', '#f87171']
 
@@ -72,7 +78,11 @@ export async function sessionRoutes(app) {
     }
     const board = await prisma.board.findFirst({ where: { id: session.boardId } })
     const state = session.state
-    const { playerIdx = null, correct = null, topicIdx, cellIdx, closesCell = false } = request.body ?? {}
+    const body = request.body ?? {}
+
+    if (body.final === true) return finalJudgment(session, state, body, reply)
+
+    const { playerIdx = null, correct = null, topicIdx, cellIdx, closesCell = false } = body
 
     const cell = board?.topics?.[topicIdx]?.cells?.[cellIdx]
     if (!Number.isInteger(topicIdx) || !Number.isInteger(cellIdx) || !cell) {
@@ -119,8 +129,78 @@ export async function sessionRoutes(app) {
     return { session: updated }
   })
 
+  // Final round, step 1: lock every player's wager. A wager is an integer
+  // from 0 up to the player's current score (0 if they are at or below 0).
+  app.post('/api/sessions/:id/final/start', async (request, reply) => {
+    const session = await findOwn(request)
+    if (!session) return reply.code(404).send({ error: 'Session not found' })
+    if (session.status !== 'active') {
+      return reply.code(409).send({ error: 'Session is finished' })
+    }
+    const board = await prisma.board.findFirst({ where: { id: session.boardId } })
+    if (!board?.final) return reply.code(400).send({ error: 'This board has no final round' })
+    const state = session.state
+    if (state.final) return reply.code(409).send({ error: 'Final round already started' })
+
+    const { wagers } = request.body ?? {}
+    if (!Array.isArray(wagers) || wagers.length !== state.players.length) {
+      return reply.code(400).send({ error: 'One wager per player is required' })
+    }
+    for (let i = 0; i < wagers.length; i++) {
+      const w = wagers[i]
+      const max = Math.max(0, state.players[i].score)
+      if (!Number.isInteger(w) || w < 0 || w > max) {
+        return reply.code(400).send({
+          error: `${state.players[i].name} can wager between 0 and ${max}`,
+        })
+      }
+    }
+    state.final = { wagers, judged: [], ts: new Date().toISOString() }
+    const updated = await prisma.gameSession.update({
+      where: { id: session.id },
+      data: { state },
+    })
+    return { session: updated }
+  })
+
+  // Final round, step 2 (via /events with final:true): judge one player.
+  // Points are the locked wager — never taken from the client.
+  async function finalJudgment(session, state, body, reply) {
+    if (!state.final) return reply.code(409).send({ error: 'Final round has not started' })
+    const { playerIdx, correct } = body
+    if (!Number.isInteger(playerIdx) || !state.players[playerIdx]) {
+      return reply.code(400).send({ error: 'No such player' })
+    }
+    if (typeof correct !== 'boolean') {
+      return reply.code(400).send({ error: 'correct must be true or false' })
+    }
+    if (state.final.judged.includes(playerIdx)) {
+      return reply.code(409).send({ error: 'Player already judged in the final round' })
+    }
+    const wager = state.final.wagers[playerIdx]
+    const entry = {
+      playerIdx,
+      points: wager,
+      correct,
+      topicIdx: null,
+      cellIdx: null,
+      closesCell: false,
+      final: true,
+      ts: new Date().toISOString(),
+    }
+    state.players[playerIdx].score += correct ? wager : -wager
+    state.final.judged.push(playerIdx)
+    state.log.push(entry)
+    const updated = await prisma.gameSession.update({
+      where: { id: session.id },
+      data: { state },
+    })
+    return { session: updated }
+  }
+
   // Undo: revert the last log entry — score change and, if it closed the
-  // cell, the cell's used state (SPEC §6.5).
+  // cell, the cell's used state (SPEC §6.5). A final-round judgment also
+  // becomes un-judged so the player can be re-judged.
   app.post('/api/sessions/:id/undo', async (request, reply) => {
     const session = await findOwn(request)
     if (!session) return reply.code(404).send({ error: 'Session not found' })
@@ -138,6 +218,9 @@ export async function sessionRoutes(app) {
       state.usedCells = state.usedCells.filter(
         ([t, c]) => !(t === entry.topicIdx && c === entry.cellIdx),
       )
+    }
+    if (entry.final && state.final) {
+      state.final.judged = state.final.judged.filter((i) => i !== entry.playerIdx)
     }
 
     const updated = await prisma.gameSession.update({

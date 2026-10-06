@@ -8,7 +8,10 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "migrate": "prisma migrate deploy",
-    "seed": "node scripts/seed-demo.js"
+    "seed": "node scripts/seed-demo.js",
+    "postinstall": "prisma generate",
+    "backup": "node scripts/backup.js",
+    "restore": "node scripts/restore.js"
   },
   "keywords": [],
   "author": "",
@@ -20,9 +23,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
-    "fastify": "^5.10.0"
-  },
-  "devDependencies": {
+    "fastify": "^5.10.0",
     "prisma": "^7.8.0"
   },
   "engines": {

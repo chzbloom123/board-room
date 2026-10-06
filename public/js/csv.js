@@ -88,6 +88,7 @@ export function boardFromCsv(text) {
   const warnings = []
   const topics = []
   const topicByName = new Map()
+  let final = null
 
   let records = parseCsv(text ?? '')
   if (records.length > 0 && isHeaderRecord(records[0])) {
@@ -96,6 +97,7 @@ export function boardFromCsv(text) {
   if (records.length === 0) {
     return {
       topics: [],
+      final: null,
       errors: [{ row: 1, message: 'No question rows found' }],
       warnings: [],
     }
@@ -110,6 +112,21 @@ export function boardFromCsv(text) {
       continue
     }
     const [rawTopic, rawPoints, rawQuestion, rawAnswer] = fields.map((f) => f.trim())
+
+    // Final-round row: the points column is the word "final". The topic
+    // column is the final category. At most one per board.
+    if (isFinalMarker(rawPoints)) {
+      if (final) {
+        errors.push({ row: line, message: `Row ${line}: only one final-round row is allowed (first one is on row ${final.row})` })
+        continue
+      }
+      let badFinal = false
+      if (rawTopic === '') { errors.push({ row: line, message: `Row ${line}: final round is missing its category` }); badFinal = true }
+      if (rawQuestion === '') { errors.push({ row: line, message: `Row ${line}: final round is missing its question` }); badFinal = true }
+      if (rawAnswer === '') { errors.push({ row: line, message: `Row ${line}: final round is missing its answer` }); badFinal = true }
+      if (!badFinal) final = { row: line, category: rawTopic, question: rawQuestion, answer: rawAnswer }
+      continue
+    }
 
     let bad = false
     if (rawTopic === '') {
@@ -150,11 +167,38 @@ export function boardFromCsv(text) {
     topic.cells.push({ points, question: rawQuestion, answer: rawAnswer })
   }
 
+  if (errors.length === 0 && topics.length === 0) {
+    errors.push({ row: 1, message: 'No question rows found (a board needs regular questions, not only a final round)' })
+  }
   if (errors.length === 0) {
     warnings.push(...boardShapeWarnings(topics))
   }
 
-  return { topics, errors, warnings }
+  return {
+    topics,
+    final: final ? { category: final.category, question: final.question, answer: final.answer } : null,
+    errors,
+    warnings,
+  }
+}
+
+const FINAL_MARKERS = ['final', 'final round', 'final question', 'fj']
+function isFinalMarker(points) {
+  return FINAL_MARKERS.includes(points.trim().toLowerCase())
+}
+
+// Structural validation for an imported final round (same rules as the CSV
+// row, minus the row number). null/undefined means "no final round".
+export function validateFinal(final) {
+  if (final === null || final === undefined) return { errors: [] }
+  const errors = []
+  if (typeof final !== 'object') return { errors: [{ message: 'Final round must be an object' }] }
+  for (const key of ['category', 'question', 'answer']) {
+    if (typeof final[key] !== 'string' || final[key].trim() === '') {
+      errors.push({ message: `Final round: missing ${key}` })
+    }
+  }
+  return { errors }
 }
 
 // Shape warnings (SPEC §5): advisory only, save is allowed. Also used by
@@ -242,7 +286,7 @@ function escapeCsvField(value) {
 
 // Regenerate CSV text from stored topics — the edit screen's source of truth
 // (SPEC §6.3). boardFromCsv(csvFromTopics(t)) must deep-equal t.
-export function csvFromTopics(topics) {
+export function csvFromTopics(topics, final = null) {
   const lines = ['topic,points,question,answer']
   for (const topic of topics) {
     for (const cell of topic.cells) {
@@ -253,5 +297,26 @@ export function csvFromTopics(topics) {
       )
     }
   }
+  if (final) {
+    lines.push([final.category, 'final', final.question, final.answer].map(escapeCsvField).join(','))
+  }
   return lines.join('\n') + '\n'
+}
+
+// Spreadsheet paste support. Copying cells out of Excel / Google Sheets
+// yields tab-separated text; this rewrites it as CSV so the one parser
+// above handles it. It is a field-escaping text transform, not a second
+// parser: boardFromCsv remains the only thing that interprets rows.
+export function looksTabSeparated(text) {
+  const lines = (text ?? '').split(/\r?\n/).filter((l) => l.trim() !== '')
+  if (lines.length === 0) return false
+  const tabbed = lines.filter((l) => l.includes('\t')).length
+  return tabbed >= Math.max(1, Math.ceil(lines.length * 0.8))
+}
+
+export function tsvToCsv(text) {
+  return (text ?? '')
+    .split(/\r?\n/)
+    .map((line) => (line.trim() === '' ? '' : line.split('\t').map((f) => escapeCsvField(f.trim())).join(',')))
+    .join('\n')
 }

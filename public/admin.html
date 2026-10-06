@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" data-theme="classic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Board Room — Admin</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2712%27 fill=%27%2314213d%27/%3E%3Crect x=%2710%27 y=%2710%27 width=%2744%27 height=%2744%27 rx=%276%27 fill=%27%23fca311%27/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+  <div id="app">
+    <!-- Admin login -->
+    <section id="view-admin-login" class="view" hidden>
+      <div class="login-card">
+        <h1 class="brand brand-big">Board Room</h1>
+        <p class="tagline">Site admin</p>
+        <form id="admin-login-form">
+          <label>Admin user
+            <input name="user" autocomplete="off" autocapitalize="off" required>
+          </label>
+          <label>Password
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button type="submit" class="btn btn-gold">Sign in</button>
+          <p id="admin-login-error" class="form-error" role="alert" hidden></p>
+        </form>
+        <p class="admin-back"><a href="/">← Instructor sign-in</a></p>
+      </div>
+    </section>
+
+    <!-- Admin panel -->
+    <section id="view-admin" class="view" hidden>
+      <header class="topbar">
+        <span class="brand brand-small">Board Room</span>
+        <span class="admin-tag">Admin</span>
+        <span class="spacer"></span>
+        <span id="admin-user" class="profile-chip"></span>
+        <a class="btn btn-quiet" href="/">Instructor site</a>
+        <button id="admin-logout-btn" class="btn btn-quiet">Sign out</button>
+      </header>
+      <main class="admin">
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <h2>Instructors</h2>
+            <span class="spacer"></span>
+            <form id="create-profile-form" class="admin-inline-form">
+              <input name="name" placeholder="New profile name" autocomplete="off" required>
+              <input name="password" type="password" placeholder="Password (8+ chars)" autocomplete="new-password" required>
+              <button type="submit" class="btn btn-gold btn-inline btn-small">Create login</button>
+            </form>
+          </div>
+          <p class="admin-note">Each instructor profile is a shared group login and its own bucket of boards. Deleting a profile is blocked while it still owns boards or games — move or delete those first.</p>
+          <table class="admin-table" id="profiles-table">
+            <thead><tr><th>Name</th><th>Boards</th><th>Live games</th><th>Created</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <h2>Boards</h2>
+            <span class="spacer"></span>
+            <input id="admin-board-search" class="search-input" type="search" placeholder="Filter by board or owner…" aria-label="Filter boards">
+          </div>
+          <table class="admin-table" id="boards-table">
+            <thead><tr><th>Board</th><th>Owner</th><th>Shape</th><th>Updated</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p id="admin-boards-empty" class="empty-note" hidden>No boards yet.</p>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <h2>Live games</h2>
+            <span class="spacer"></span>
+            <button id="admin-refresh-btn" class="btn btn-quiet btn-small">Refresh</button>
+          </div>
+          <table class="admin-table" id="sessions-table">
+            <thead><tr><th>Board</th><th>Owner</th><th>Scores</th><th>Last activity</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p id="admin-sessions-empty" class="empty-note" hidden>No games in progress.</p>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <h2>Backup</h2>
+            <span class="spacer"></span>
+            <a id="admin-backup-btn" class="btn btn-gold btn-inline btn-small" href="/api/admin/backup" download>⬇ Download full backup (JSON)</a>
+          </div>
+          <p class="admin-note">Every instructor profile and board in one file. It includes password hashes so logins survive a restore — keep it somewhere private. Restore with <code>npm run restore -- &lt;file&gt;</code>. Railway's own Postgres backups are the second copy; see the README.</p>
+        </section>
+      </main>
+    </section>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

@@ -189,7 +189,7 @@ test('admin login: env credentials in, wrong password out', async () => {
     url: '/api/me',
     headers: { cookie: good.cookie },
   })
-  assert.deepEqual(JSON.parse(me.body), { type: 'admin' })
+  assert.deepEqual(JSON.parse(me.body), { type: 'admin', user: config.adminUser })
 
   const bad = await adminLogin(app, config.adminUser, 'not-the-password')
   assert.equal(bad.res.statusCode, 401)

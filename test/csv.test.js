@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { boardFromCsv, csvFromTopics } from '../public/js/csv.js'
+import { boardFromCsv, csvFromTopics, looksTabSeparated, tsvToCsv, validateFinal } from '../public/js/csv.js'
 
 const fixtureDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures')
 const fixture = (name) => fs.readFileSync(path.join(fixtureDir, name), 'utf8')
@@ -164,4 +164,73 @@ test('empty and whitespace-only input is an error, not a crash', () => {
     assert.ok(result.errors.length > 0, `expected error for ${JSON.stringify(input)}`)
     assert.deepEqual(result.topics, [])
   }
+})
+
+test('spreadsheet paste: tab-separated text is detected and converted for the one parser', () => {
+  const pasted = [
+    'topic\tpoints\tquestion\tanswer',
+    'Alpha\t100\tWhat, exactly, is a comma?\tPunctuation',
+    'Alpha\t200\tSay "hello"\tGreeting',
+    '',
+  ].join('\n')
+  assert.equal(looksTabSeparated(pasted), true)
+  assert.equal(looksTabSeparated('Alpha,100,Q?,A'), false)
+  assert.equal(looksTabSeparated(''), false)
+
+  const csv = tsvToCsv(pasted)
+  // Commas and quotes survive the transform because fields get CSV-escaped.
+  const parsed = boardFromCsv(csv)
+  assert.deepEqual(parsed.errors, [])
+  assert.deepEqual(parsed.topics, [
+    {
+      name: 'Alpha',
+      cells: [
+        { points: 100, question: 'What, exactly, is a comma?', answer: 'Punctuation' },
+        { points: 200, question: 'Say "hello"', answer: 'Greeting' },
+      ],
+    },
+  ])
+})
+
+test('final round: one "final" row becomes board.final and round-trips through csvFromTopics', () => {
+  const parsed = boardFromCsv(fixture('final-round.csv'))
+  assert.deepEqual(parsed.errors, [])
+  assert.deepEqual(parsed.final, {
+    category: 'Wrap, Up',
+    question: 'The closing question, with a comma',
+    answer: 'The closing answer',
+  })
+  assert.equal(parsed.topics.length, 2, 'the final row must not become a topic')
+
+  const again = boardFromCsv(csvFromTopics(parsed.topics, parsed.final))
+  assert.deepEqual(again.topics, parsed.topics)
+  assert.deepEqual(again.final, parsed.final)
+
+  // No final row → final is null, and csvFromTopics omits it.
+  const none = boardFromCsv('Alpha,100,Q?,A')
+  assert.equal(none.final, null)
+  assert.ok(!csvFromTopics(none.topics, none.final).includes('final'))
+})
+
+test('final round: errors for a second final row, a missing answer, and a final-only board', () => {
+  const two = boardFromCsv('Alpha,100,Q?,A\nCat,final,FQ?,FA\nCat2,FINAL,FQ2?,FA2')
+  assert.equal(two.errors.length, 1)
+  assert.match(two.errors[0].message, /only one final-round row/i)
+  assert.equal(two.errors[0].row, 3)
+
+  const missing = boardFromCsv('Alpha,100,Q?,A\nCat,final,FQ?,')
+  assert.equal(missing.errors.length, 1)
+  assert.match(missing.errors[0].message, /final round is missing its answer/i)
+  assert.equal(missing.final, null)
+
+  const onlyFinal = boardFromCsv('Cat,final,FQ?,FA')
+  assert.ok(onlyFinal.errors.some((e) => /not only a final round/i.test(e.message)))
+})
+
+test('validateFinal accepts null and rejects malformed objects', () => {
+  assert.deepEqual(validateFinal(null).errors, [])
+  assert.deepEqual(validateFinal(undefined).errors, [])
+  assert.deepEqual(validateFinal({ category: 'C', question: 'Q', answer: 'A' }).errors, [])
+  assert.equal(validateFinal({ category: 'C', question: '' }).errors.length, 2)
+  assert.equal(validateFinal('nope').errors.length, 1)
 })

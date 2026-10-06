@@ -8,6 +8,7 @@ import { prisma } from './db.js'
 import { authRoutes } from './auth.js'
 import { boardRoutes } from './boards.js'
 import { sessionRoutes } from './sessions.js'
+import { adminRoutes } from './admin.js'
 
 const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
@@ -26,15 +27,20 @@ export function buildApp({ logger = true, loggerStream } = {}) {
   const app = Fastify({
     logger: logger ? { redact: logRedactions, stream: loggerStream } : false,
     trustProxy: true, // Railway terminates TLS in front of the app
+    bodyLimit: 2 * 1024 * 1024, // a board CSV is kilobytes; 2 MB is generous
   })
 
   app.register(fastifyCookie, { secret: config.sessionSecret })
 
   app.register(fastifyStatic, { root: publicDir })
 
+  // The admin panel is its own small page: /admin → public/admin.html.
+  app.get('/admin', (request, reply) => reply.sendFile('admin.html'))
+
   app.register(authRoutes)
   app.register(boardRoutes)
   app.register(sessionRoutes)
+  app.register(adminRoutes)
 
   app.get('/healthz', async (request, reply) => {
     try {

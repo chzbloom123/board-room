@@ -21,6 +21,7 @@ model Board {
   ownerProfileId String
   name           String
   topics         Json // [{ name, cells: [{ points, question, answer }] }]
+  final          Json? // { category, question, answer } — optional final round
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   owner          InstructorProfile @relation(fields: [ownerProfileId], references: [id])

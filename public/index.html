@@ -1,21 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="classic">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Board Room</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2712%27 fill=%27%2314213d%27/%3E%3Crect x=%2710%27 y=%2710%27 width=%2744%27 height=%2744%27 rx=%276%27 fill=%27%23fca311%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-family=%27Impact,Arial Narrow,sans-serif%27 font-size=%2732%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27%2314213d%27%3E500%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <div class="bg-glow bg-glow-a" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-b" aria-hidden="true"></div>
+
   <div id="app">
     <!-- Login view -->
     <section id="view-login" class="view" hidden>
       <div class="login-card">
-        <h1 class="brand">Board Room</h1>
+        <div class="login-logo" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+        <h1 class="brand brand-big">Board Room</h1>
         <p class="tagline">Instructor sign-in</p>
         <form id="login-form">
           <label>Profile name
-            <input name="name" autocomplete="username" required>
+            <input name="name" autocomplete="off" autocapitalize="off" required>
           </label>
           <label>Password
             <input name="password" type="password" autocomplete="current-password" required>
@@ -23,6 +34,27 @@
           <button type="submit" class="btn btn-gold">Sign in</button>
           <p id="login-error" class="form-error" role="alert" hidden></p>
         </form>
+        <form id="register-form" hidden>
+          <label>Profile name <span class="label-hint">(your class or group, e.g. "Steam Ops")</span>
+            <input name="name" autocomplete="off" autocapitalize="off" minlength="2" maxlength="40" required>
+          </label>
+          <label>Password <span class="label-hint">(8+ characters, shared with your co-instructors)</span>
+            <input name="password" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label>Confirm password
+            <input name="confirm" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label id="register-code-label" hidden>Invite code
+            <input name="code" autocomplete="off" autocapitalize="off">
+          </label>
+          <button type="submit" class="btn btn-gold">Create login</button>
+          <p id="register-error" class="form-error" role="alert" hidden></p>
+        </form>
+        <p class="auth-switch">
+          <button id="show-register-btn" class="link-btn" type="button">New here? Create an instructor login</button>
+          <button id="show-login-btn" class="link-btn" type="button" hidden>Already have a login? Sign in</button>
+        </p>
+        <p id="register-closed" class="auth-note" hidden>Sign-up is by admin invitation on this site — ask the site owner for a login.</p>
       </div>
     </section>
 
@@ -31,21 +63,36 @@
       <header class="topbar">
         <span class="brand brand-small">Board Room</span>
         <span class="spacer"></span>
+        <label class="theme-pick">
+          <span class="sr-only">Theme</span>
+          <select class="theme-select" aria-label="Color theme"></select>
+        </label>
         <span id="profile-name" class="profile-chip"></span>
+        <button id="account-btn" class="btn btn-quiet btn-small" title="Change this profile's password">Password</button>
         <button id="logout-btn" class="btn btn-quiet">Sign out</button>
       </header>
       <main class="library">
         <div class="library-head">
           <h2>Boards</h2>
+          <input id="library-search" class="search-input" type="search" placeholder="Search boards…" aria-label="Search boards" hidden>
           <span class="spacer"></span>
           <button id="import-btn" class="btn btn-quiet">Import JSON</button>
           <input id="import-file" type="file" accept=".json,application/json" hidden>
-          <button id="new-board-btn" class="btn btn-gold btn-inline">New board</button>
+          <button id="new-board-btn" class="btn btn-gold btn-inline">+ New board</button>
         </div>
-        <ul id="board-list" class="board-list"></ul>
-        <p id="library-empty" class="empty-note" hidden>
-          No boards yet — create one from CSV or import a JSON export.
-        </p>
+        <ul id="board-list" class="board-grid"></ul>
+        <div id="library-empty" class="empty-state" hidden>
+          <div class="empty-art" aria-hidden="true">
+            <span>100</span><span>200</span><span>300</span><span>400</span><span>500</span>
+          </div>
+          <h3>No boards yet</h3>
+          <p>Build one from a CSV of questions, import a colleague's JSON export, or try the sample board to see how a game runs.</p>
+          <div class="empty-actions">
+            <button id="empty-new-btn" class="btn btn-gold btn-inline">Create from CSV</button>
+            <button id="empty-sample-btn" class="btn btn-quiet">Try the sample board</button>
+          </div>
+        </div>
+        <p id="library-nomatch" class="empty-note" hidden>No boards match that search.</p>
       </main>
     </section>
 
@@ -62,13 +109,20 @@
           <input id="editor-name" placeholder="e.g. Q3 Safety Review" required>
         </label>
         <div class="editor-csv-head">
-          <label for="editor-csv">Questions (CSV: topic, points, question, answer — one row per question)</label>
+          <label for="editor-csv">Questions — one row per question: <code>topic, points, question, answer</code>. Optional final round: one row with <code>final</code> as the points.</label>
           <span class="spacer"></span>
+          <button id="csv-template-btn" class="btn btn-quiet btn-small" title="A blank 6 × 5 board to fill in Excel or Sheets">Download template</button>
+          <button id="csv-sample-btn" class="btn btn-quiet btn-small">Load sample</button>
           <button id="csv-upload-btn" class="btn btn-quiet btn-small">Upload CSV file</button>
-          <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
+          <input id="csv-file" type="file" accept=".csv,text/csv,.txt,text/plain" hidden>
         </div>
         <textarea id="editor-csv" rows="12" spellcheck="false"
-          placeholder="Safety Basics,100,What does PPE stand for?,Personal Protective Equipment"></textarea>
+          placeholder="Safety Basics,100,What does PPE stand for?,Personal Protective Equipment&#10;Safety Basics,200,…&#10;&#10;Tip: you can also paste straight from Excel or Google Sheets."></textarea>
+        <div id="editor-tsv-hint" class="tsv-hint" hidden>
+          <span>That looks like it was pasted from a spreadsheet (tab-separated).</span>
+          <button id="csv-convert-btn" class="btn btn-gold btn-inline btn-small">Convert to CSV</button>
+        </div>
+        <div id="editor-stats" class="editor-stats"></div>
         <div id="editor-problems"></div>
         <div id="editor-preview"></div>
         <div class="editor-actions">
@@ -77,6 +131,7 @@
         </div>
       </main>
     </section>
+
     <!-- Player setup view -->
     <section id="view-setup" class="view" hidden>
       <header class="topbar">
@@ -86,11 +141,14 @@
       </header>
       <main class="setup">
         <h2 id="setup-title">New game</h2>
-        <p class="setup-hint">Add the players or teams answering today.</p>
+        <p class="setup-hint">Add the players or teams answering today. Click a colour dot to change it.</p>
+        <button id="setup-last-btn" class="btn btn-quiet btn-small setup-last" hidden></button>
         <ul id="player-list" class="player-list"></ul>
         <div class="setup-actions">
-          <button id="add-player-btn" class="btn btn-quiet">Add player</button>
-          <button id="start-game-btn" class="btn btn-gold btn-inline">Start game</button>
+          <button id="add-player-btn" class="btn btn-quiet">+ Add player</button>
+          <button id="suggest-names-btn" class="btn btn-quiet" title="Fill blank rows with team names">✨ Suggest names</button>
+          <span class="spacer"></span>
+          <button id="start-game-btn" class="btn btn-gold btn-inline">Start game →</button>
         </div>
         <p id="setup-error" class="form-error" role="alert" hidden></p>
       </main>
@@ -101,9 +159,24 @@
       <header class="topbar game-topbar">
         <span class="brand brand-small">Board Room</span>
         <span id="game-board-name" class="game-board-name"></span>
+        <div class="game-progress" title="Questions remaining">
+          <span id="game-remaining" class="game-remaining"></span>
+          <span class="progress-track"><span id="game-progress-bar" class="progress-bar"></span></span>
+        </div>
         <span class="spacer"></span>
-        <button id="undo-btn" class="btn btn-quiet" disabled>Undo</button>
-        <button id="end-game-btn" class="btn btn-danger">End game</button>
+        <button id="random-btn" class="btn btn-quiet btn-icon" title="Pick a random open question (R)">🎲 <span class="btn-label">Random</span></button>
+        <button id="undo-btn" class="btn btn-quiet btn-icon" title="Undo the last scoring event (U)" disabled>↶ <span class="btn-label">Undo</span></button>
+        <span class="topbar-divider"></span>
+        <button id="sound-btn" class="btn btn-quiet btn-icon" title="Toggle sound effects (M)">🔊</button>
+        <label class="theme-pick">
+          <span class="sr-only">Theme</span>
+          <select class="theme-select" aria-label="Color theme"></select>
+        </label>
+        <button id="fullscreen-btn" class="btn btn-quiet btn-icon" title="Toggle fullscreen (F)">⛶</button>
+        <button id="help-btn" class="btn btn-quiet btn-icon" title="Keyboard shortcuts (?)">?</button>
+        <span class="topbar-divider"></span>
+        <button id="final-btn" class="btn btn-quiet btn-icon btn-final" title="Final round" hidden>★ <span class="btn-label">Final round</span></button>
+        <button id="end-game-btn" class="btn btn-danger">Results</button>
         <button id="game-back-btn" class="btn btn-quiet" title="The game stays active — resume it from the library">Library</button>
       </header>
       <main class="game">
@@ -113,21 +186,123 @@
 
       <!-- Question modal -->
       <div id="question-modal" class="modal" hidden>
-        <div class="modal-card">
-          <div id="modal-head" class="modal-head"></div>
+        <div id="modal-card" class="modal-card">
+          <div class="modal-banner">
+            <span id="modal-topic" class="modal-topic"></span>
+            <span id="modal-points" class="modal-points"></span>
+          </div>
           <div id="modal-question" class="modal-question"></div>
           <div id="modal-answer" class="modal-answer" hidden></div>
           <div class="modal-controls">
-            <button id="reveal-btn" class="btn btn-gold btn-inline">Reveal answer</button>
+            <button id="reveal-btn" class="btn btn-gold btn-inline btn-big">Reveal answer <kbd>Space</kbd></button>
           </div>
           <div id="judging" class="judging" hidden></div>
           <div class="modal-footer">
-            <button id="noone-btn" class="btn btn-quiet" hidden>No one got it — close question</button>
-            <button id="modal-cancel-btn" class="btn btn-quiet">Back to board</button>
+            <button id="noone-btn" class="btn btn-quiet" hidden>No one got it — close question <kbd>N</kbd></button>
+            <button id="modal-cancel-btn" class="btn btn-quiet">Back to board <kbd>Esc</kbd></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results overlay -->
+      <div id="results-modal" class="modal" hidden>
+        <div class="modal-card results-card">
+          <p id="results-kicker" class="results-kicker">Final standings</p>
+          <h2 id="results-title" class="results-title"></h2>
+          <div id="podium" class="podium"></div>
+          <ol id="results-list" class="results-list"></ol>
+          <div class="modal-footer">
+            <button id="results-close-btn" class="btn btn-quiet">Back to board</button>
+            <button id="results-rematch-btn" class="btn btn-quiet">Rematch — same teams</button>
+            <button id="results-final-btn" class="btn btn-gold btn-inline" hidden>★ Play the final round</button>
+            <button id="results-finish-btn" class="btn btn-gold btn-inline">Finish &amp; return to library</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final round overlay -->
+      <div id="final-modal" class="modal" hidden>
+        <div class="modal-card final-card">
+          <p class="results-kicker">★ Final round</p>
+          <h2 id="final-category" class="final-category"></h2>
+
+          <div id="final-wagers" hidden>
+            <p class="judging-hint">Each team wagers up to its current score. Collect the wagers, enter them, then lock them in.</p>
+            <div id="final-wager-rows" class="wager-rows"></div>
+            <p id="final-error" class="form-error" role="alert" hidden></p>
+            <div class="modal-footer">
+              <button id="final-cancel-btn" class="btn btn-quiet">Not now <kbd>Esc</kbd></button>
+              <button id="final-lock-btn" class="btn btn-gold btn-inline btn-big">Lock wagers &amp; show the question</button>
+            </div>
+          </div>
+
+          <div id="final-play" hidden>
+            <div id="final-question" class="modal-question"></div>
+            <div id="final-music" class="music-bar" hidden>
+              <span id="final-music-fill" class="music-fill"></span>
+              <span id="final-music-label" class="music-label">♪ think music</span>
+            </div>
+            <div id="final-answer" class="modal-answer" hidden></div>
+            <div id="final-controls" class="modal-controls">
+              <button id="final-music-btn" class="btn btn-quiet btn-inline">♪ Play think music</button>
+              <button id="final-reveal-btn" class="btn btn-gold btn-inline btn-big">Reveal answer <kbd>Space</kbd></button>
+            </div>
+            <div id="final-judging" class="judging" hidden></div>
+            <div class="modal-footer">
+              <button id="final-close-btn" class="btn btn-quiet">Back to board <kbd>Esc</kbd></button>
+              <button id="final-results-btn" class="btn btn-gold btn-inline" hidden>Show final results</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shortcut help overlay -->
+      <div id="help-modal" class="modal" hidden>
+        <div class="modal-card help-card">
+          <h2 class="help-title">Keyboard shortcuts</h2>
+          <dl class="shortcut-list">
+            <dt><kbd>Space</kbd></dt><dd>Reveal the answer</dd>
+            <dt><kbd>1</kbd>–<kbd>6</kbd></dt><dd>Mark player 1–6 correct (after reveal)</dd>
+            <dt><kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>6</kbd></dt><dd>Mark player 1–6 wrong</dd>
+            <dt><kbd>N</kbd></dt><dd>No one got it — close the question</dd>
+            <dt><kbd>Esc</kbd></dt><dd>Back to the board</dd>
+            <dt><kbd>R</kbd></dt><dd>Pick a random open question</dd>
+            <dt><kbd>U</kbd></dt><dd>Undo the last scoring event</dd>
+            <dt><kbd>M</kbd></dt><dd>Mute / unmute sound</dd>
+            <dt><kbd>F</kbd></dt><dd>Toggle fullscreen</dd>
+            <dt><kbd>?</kbd></dt><dd>This help</dd>
+            <dt><kbd>1</kbd>–<kbd>6</kbd></dt><dd>In the final round: judge team 1–6 (Shift = wrong)</dd>
+          </dl>
+          <p class="help-note">Shortcuts never fire while you are typing in a text field.</p>
+          <div class="modal-footer">
+            <button id="help-close-btn" class="btn btn-gold btn-inline">Got it</button>
           </div>
         </div>
       </div>
     </section>
+  </div>
+  <!-- Change-password modal -->
+  <div id="account-modal" class="modal" hidden>
+    <div class="modal-card help-card">
+      <h2 class="help-title">Change password</h2>
+      <p class="help-note" style="margin:0 0 1rem">This changes the password for the whole <strong id="account-profile-name"></strong> profile — everyone who shares it will need the new one.</p>
+      <form id="account-form">
+        <label>Current password
+          <input name="currentPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <label>New password <span class="label-hint">(8+ characters)</span>
+          <input name="newPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>Confirm new password
+          <input name="confirm" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <p id="account-error" class="form-error" role="alert" hidden></p>
+        <div class="modal-footer">
+          <button id="account-cancel-btn" type="button" class="btn btn-quiet">Cancel</button>
+          <button type="submit" class="btn btn-gold btn-inline">Change password</button>
+        </div>
+      </form>
+    </div>
   </div>
   <div id="toast" class="toast" hidden></div>
   <script type="module" src="/js/app.js"></script>

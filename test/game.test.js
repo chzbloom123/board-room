@@ -248,3 +248,97 @@ test('ending a session clears the library indicator', async () => {
   const list = JSON.parse((await get('/api/boards', cookieA)).body)
   assert.equal(list[0].activeSessionId, null)
 })
+
+// ---------- Final round (owner override of SPEC §7; see issues.md) ----------
+
+const FINAL_CSV = CSV + '\nWrap Up,final,Closing question?,Closing answer'
+
+async function finalBoardSession() {
+  const res = await post('/api/boards', cookieA, { name: 'Final board', csv: FINAL_CSV })
+  assert.equal(res.statusCode, 200)
+  const b = JSON.parse(res.body).board
+  assert.deepEqual(b.final, { category: 'Wrap Up', question: 'Closing question?', answer: 'Closing answer' })
+  const s = await post('/api/sessions', cookieA, {
+    boardId: b.id,
+    players: [{ name: 'Red team' }, { name: 'Blue team' }, { name: 'Green team' }],
+  })
+  return JSON.parse(s.body).session
+}
+
+test('final round: wagers are bounded by score, judgments score ±wager, undo re-opens a judgment', async () => {
+  let s = await finalBoardSession()
+  // Red +200, Blue −100, Green stays 0.
+  s = JSON.parse((await post(`/api/sessions/${s.id}/events`, cookieA, { playerIdx: 0, correct: true, topicIdx: 0, cellIdx: 1, closesCell: true })).body).session
+  s = JSON.parse((await post(`/api/sessions/${s.id}/events`, cookieA, { playerIdx: 1, correct: false, topicIdx: 0, cellIdx: 0, closesCell: false })).body).session
+  assert.deepEqual(scores(s), [200, -100, 0])
+
+  // Judging before wagers are locked is refused.
+  let r = await post(`/api/sessions/${s.id}/events`, cookieA, { final: true, playerIdx: 0, correct: true })
+  assert.equal(r.statusCode, 409)
+
+  // Over-the-limit and malformed wagers are refused; negative scores cap at 0.
+  for (const wagers of [[201, 0, 0], [0, 1, 0], [-5, 0, 0], [0, 0], [1.5, 0, 0], 'nope']) {
+    r = await post(`/api/sessions/${s.id}/final/start`, cookieA, { wagers })
+    assert.equal(r.statusCode, 400, `wagers ${JSON.stringify(wagers)} should be rejected`)
+  }
+  r = await post(`/api/sessions/${s.id}/final/start`, cookieA, { wagers: [150, 0, 0] })
+  assert.equal(r.statusCode, 200)
+  s = JSON.parse(r.body).session
+  assert.deepEqual(s.state.final.wagers, [150, 0, 0])
+  assert.deepEqual(s.state.final.judged, [])
+
+  // Starting twice is refused.
+  r = await post(`/api/sessions/${s.id}/final/start`, cookieA, { wagers: [0, 0, 0] })
+  assert.equal(r.statusCode, 409)
+
+  // Red wrong → −150; Blue correct → +0 (wager 0).
+  s = JSON.parse((await post(`/api/sessions/${s.id}/events`, cookieA, { final: true, playerIdx: 0, correct: false })).body).session
+  assert.deepEqual(scores(s), [50, -100, 0])
+  s = JSON.parse((await post(`/api/sessions/${s.id}/events`, cookieA, { final: true, playerIdx: 1, correct: true })).body).session
+  assert.deepEqual(scores(s), [50, -100, 0])
+  assert.deepEqual(s.state.final.judged, [0, 1])
+  assert.equal(s.state.log.at(-1).final, true)
+  assert.equal(s.state.log.at(-1).points, 0)
+
+  // Re-judging the same player is refused.
+  r = await post(`/api/sessions/${s.id}/events`, cookieA, { final: true, playerIdx: 0, correct: true })
+  assert.equal(r.statusCode, 409)
+
+  // Undo twice: Blue un-judged, then Red un-judged with score restored.
+  s = JSON.parse((await post(`/api/sessions/${s.id}/undo`, cookieA)).body).session
+  assert.deepEqual(s.state.final.judged, [0])
+  s = JSON.parse((await post(`/api/sessions/${s.id}/undo`, cookieA)).body).session
+  assert.deepEqual(scores(s), [200, -100, 0])
+  assert.deepEqual(s.state.final.judged, [])
+  assert.deepEqual(s.state.final.wagers, [150, 0, 0], 'undo never touches locked wagers')
+
+  // Red can now be judged correct → +150. Board cells are untouched by any of this.
+  s = JSON.parse((await post(`/api/sessions/${s.id}/events`, cookieA, { final: true, playerIdx: 0, correct: true })).body).session
+  assert.deepEqual(scores(s), [350, -100, 0])
+  assert.deepEqual(used(s), [[0, 1]])
+
+  // Resume reads the final state back identically.
+  const read = JSON.parse((await get(`/api/sessions/${s.id}`, cookieA)).body)
+  assert.deepEqual(read.session.state, s.state)
+  assert.deepEqual(read.board.final.category, 'Wrap Up')
+})
+
+test('final round: a board without one refuses to start it; export/import carry the final round', async () => {
+  const s = await startSession()
+  const r = await post(`/api/sessions/${s.id}/final/start`, cookieA, { wagers: [0, 0] })
+  assert.equal(r.statusCode, 400)
+
+  const created = JSON.parse((await post('/api/boards', cookieA, { name: 'Final board', csv: FINAL_CSV })).body).board
+  const exported = JSON.parse((await get(`/api/boards/${created.id}/export`, cookieA)).body)
+  assert.deepEqual(exported.final, created.final)
+  const imported = JSON.parse(
+    (await post('/api/boards/import', cookieA, { name: 'Imported', topics: exported.topics, final: exported.final })).body,
+  ).board
+  assert.deepEqual(imported.final, created.final)
+  assert.deepEqual(imported.topics, created.topics)
+
+  const bad = await post('/api/boards/import', cookieA, { name: 'Bad', topics: exported.topics, final: { category: 'C' } })
+  assert.equal(bad.statusCode, 400)
+  const summary = JSON.parse((await get('/api/boards', cookieA)).body).find((b) => b.id === created.id)
+  assert.equal(summary.hasFinal, true)
+})

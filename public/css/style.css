@@ -221,6 +221,8 @@ form label { display: block; text-align: left; margin-bottom: 1rem; font-size: 0
 .link-btn { background: none; border: none; color: var(--gold); cursor: pointer; font: inherit; font-size: 0.9rem; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
 .link-btn:hover { color: var(--gold-bright); }
 .auth-note { color: var(--ink-dim); font-size: 0.85rem; margin: 1rem 0 0; }
+.auth-link { color: var(--gold); text-underline-offset: 3px; }
+.auth-link:hover { color: var(--gold-bright); }
 .admin-back { margin: 1.2rem 0 0; font-size: 0.85rem; }
 .admin-back a { color: var(--ink-dim); }
 

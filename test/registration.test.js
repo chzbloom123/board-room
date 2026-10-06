@@ -123,3 +123,13 @@ test('repeated failed logins from one address are throttled; a success clears th
     await limited.close()
   }
 })
+
+test('typing the admin credential into the instructor form points at /admin without logging in', async () => {
+  const res = await app.inject({ method: 'POST', url: '/api/login', payload: { name: config.adminUser, password: config.adminPassword } })
+  assert.equal(res.statusCode, 401)
+  assert.match(json(res).error, /\/admin/)
+  assert.equal(sessionCookieOf(res), null, 'no session of any kind is created')
+  // Right name, wrong password: ordinary failure, nothing revealed.
+  const wrong = await app.inject({ method: 'POST', url: '/api/login', payload: { name: config.adminUser, password: 'not-it' } })
+  assert.equal(json(wrong).error, 'Wrong profile name or password')
+})

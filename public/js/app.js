@@ -40,7 +40,14 @@ $('login-form').addEventListener('submit', async (e) => {
     e.target.reset()
     await enterLibrary(profile)
   } catch (err) {
-    errEl.textContent = err.message
+    errEl.replaceChildren(err.message)
+    if (err.data?.admin) {
+      const link = document.createElement('a')
+      link.href = '/admin'
+      link.className = 'auth-link'
+      link.textContent = 'Go to the admin sign-in'
+      errEl.append(' ', link)
+    }
     errEl.hidden = false
   }
 })

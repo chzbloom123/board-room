@@ -149,6 +149,12 @@ export async function authRoutes(app) {
     const profile = await prisma.instructorProfile.findUnique({ where: { name: name.trim() } })
     const ok = profile && (await bcrypt.compare(password, profile.passwordHash))
     if (!ok) {
+      // The admin credential is not a profile. If someone types exactly it
+      // here, point them at /admin instead of a misleading 'wrong password'.
+      // Both halves must match, so this never confirms the admin user name.
+      if (timingSafeEqualStrings(name.trim(), config.adminUser) && timingSafeEqualStrings(password, config.adminPassword)) {
+        return reply.code(401).send({ error: 'Those are the site-admin credentials — sign in at /admin instead', admin: true })
+      }
       recordFailure(app, request)
       return reply.code(401).send({ error: 'Wrong profile name or password' })
     }

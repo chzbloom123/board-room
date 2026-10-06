@@ -5,13 +5,14 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
-    "start": "node src/index.js",
+    "start": "prisma migrate deploy && node src/index.js",
     "dev": "node --watch src/index.js",
     "migrate": "prisma migrate deploy",
     "seed": "node scripts/seed-demo.js",
     "postinstall": "prisma generate",
     "backup": "node scripts/backup.js",
-    "restore": "node scripts/restore.js"
+    "restore": "node scripts/restore.js",
+    "serve": "node src/index.js"
   },
   "keywords": [],
   "author": "",

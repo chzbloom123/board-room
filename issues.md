@@ -158,3 +158,15 @@ findings remain, all inside the Prisma 7 CLI's dependency chain (deepmerge-ts,
 @prisma/config, mysql2 — unused, we are on Postgres); the only offered fix is a
 downgrade to Prisma 6, which is a breaking change and not worth it: those packages
 run at CLI/build time, not in the request path. Re-check on the next Prisma release.
+
+**2026-10-06 · Phase 7 (deployed)** — First Railway deploy of commit a90af84 went
+SUCCESS (health check passed: /healthz only does SELECT 1) but the tables did not
+exist: the `preDeployCommand` in railway.json never ran (the CLI now warns that
+railway.json "Config as Code" is deprecated in favour of `.railway/railway.ts`
+IaC; existing files are honoured until 2026-12-01, yet no migrate output appeared
+in the deploy log). The Postgres service has no public URL, so migrations cannot be
+run from a laptop. Fix: `npm start` is now `prisma migrate deploy && node
+src/index.js` — migrations run inside Railway's network on every boot, idempotent,
+no dependency on platform config features. `npm run serve` starts without
+migrating. railway.json kept for the health-check path; migrate it to
+`.railway/railway.ts` before 2026-12-01.

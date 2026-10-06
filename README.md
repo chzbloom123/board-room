@@ -28,7 +28,7 @@ docker compose up -d
 # 4. Apply database migrations
 npx prisma migrate dev
 
-# 5. Start the server
+# 5. Start the server (applies any pending migrations first)
 npm start
 ```
 
@@ -119,9 +119,9 @@ The repo is shaped for Railway: config via env vars only, binds `0.0.0.0` on
    | `REGISTRATION_CODE` | an invite code to give new instructors (or `off`) |
    | `NODE_ENV` | `production` |
 
-5. **Deploy**. `railway.json` sets the pre-deploy command `npx prisma migrate deploy`,
-   so the schema is created/updated before the new version starts, and the health
-   check at `/healthz` gates the rollout.
+5. **Deploy**. `npm start` runs `prisma migrate deploy` before booting the server, so
+   the schema is created/updated on every deploy; `railway.json` also lists it as a
+   pre-deploy command and points the health check at `/healthz`.
 6. **Generate a public domain** on the service (Settings → Networking). Open it,
    create the first instructor login (with the invite code), and sign in at
    `/admin` with the admin credentials.
